@@ -48,9 +48,9 @@
         <p id="dropZoneText" class="text-gray-400 text-sm">ফাইল এখানে ড্র্যাগ করে ছাড়ুন অথবা <span class="text-blue-400 font-semibold">Browse করুন</span></p>
         <p id="selectedFileName" class="mt-2 text-sm text-green-400 font-medium hidden"></p>
       </div>
-      <div class="flex justify-end mt-4">
-        <button onclick="startUpload()" id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl transition duration-200 w-full sm:w-auto disabled:opacity-50" disabled>Upload File</button>
-      </div>
+      <div id="progressContainer" class="w-full bg-gray-800 rounded-full h-2.5 mt-4 hidden">
+  <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+</div>
       <p id="status" class="mt-3 text-sm hidden"></p>
     </div>
 
