@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modern Web Drive</title>
+  <title>Professional Web Drive</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
@@ -25,7 +25,7 @@
     </div>
 
     <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-      <h2 class="text-lg font-semibold mb-4 text-gray-300">All Stored Files (From Google Sheets)</h2>
+      <h2 class="text-lg font-semibold mb-4 text-gray-300">All Stored Files</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
@@ -44,22 +44,18 @@
   </div>
 
   <script>
+    // ⚠️ এখানে আপনার গুগল অ্যাপস স্ক্রিপ্ট থেকে পাওয়া Web App URL-টি বসান
+    const API_URL = "https://script.google.com/macros/s/AKfycbxXooLoATgP8iygcnLvI8FuUiNDq7-fKXQKleRIWHHzhV5MhZTx4MLw4BOCndcpaQd94g/exec";
 
-// ইউজার ইমেইল টাইপ করলে উপরের ডিসপ্লে আপডেট করার ফাংশন
-function updateUserDisplay() {
-  const emailInput = document.getElementById("emailInput").value;
-  const userDisplay = document.getElementById("userDisplay");
-  if (emailInput) {
-    userDisplay.innerText = emailInput;
-  } else {
-    userDisplay.innerText = "Guest User";
-  }
-}
-
-    // অ্যাপ লোড হওয়ার সাথে সাথে ফাইলের লিস্ট নিয়ে আসা
     document.addEventListener("DOMContentLoaded", function() {
       loadFiles();
     });
+
+    function updateUserDisplay() {
+      const emailInput = document.getElementById("emailInput").value;
+      const userDisplay = document.getElementById("userDisplay");
+      userDisplay.innerText = emailInput ? emailInput : "Guest User";
+    }
 
     function showStatus(text, isError = false) {
       const statusEl = document.getElementById("status");
@@ -68,7 +64,7 @@ function updateUserDisplay() {
       statusEl.classList.remove("hidden");
     }
 
-    // ফাইল আপলোড প্রসেস
+    // API এর মাধ্যমে ফাইল আপলোড করার ফাংশন
     function startUpload() {
       const fileInput = document.getElementById("fileInput");
       const emailInput = document.getElementById("emailInput");
@@ -89,32 +85,46 @@ function updateUserDisplay() {
       reader.onload = function(e) {
         const base64Data = e.target.result;
         
-        // ব্যাকএন্ড গুগল স্ক্রিপ্ট ফাংশন কল করা
-        google.script.run
-          .withSuccessHandler(function(response) {
-            uploadBtn.disabled = false;
-            uploadBtn.innerText = "Upload";
-            
-            if(response.status === 'success') {
-              showStatus("✅ File uploaded successfully!", false);
-              fileInput.value = "";
-              loadFiles(); // লিস্ট রিফ্রেশ করা
-            } else {
-              showStatus("❌ Error: " + response.message, true);
-            }
+        // standard fetch API ব্যবহার করে ব্যাকএন্ডে ডাটা পাঠানো
+        fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            base64Data: base64Data,
+            fileName: file.name,
+            userEmail: emailInput.value
           })
-          .uploadFile(base64Data, file.name, emailInput.value);
+        })
+        .then(response => response.json())
+        .then(response => {
+          uploadBtn.disabled = false;
+          uploadBtn.innerText = "Upload";
+          
+          if(response.status === 'success') {
+            showStatus("✅ File uploaded successfully!", false);
+            fileInput.value = "";
+            loadFiles();
+          } else {
+            showStatus("❌ Error: " + response.message, true);
+          }
+        })
+        .catch(err => {
+          uploadBtn.disabled = false;
+          uploadBtn.innerText = "Upload";
+          showStatus("❌ Connection Error!", true);
+          console.error(err);
+        });
       };
       
       reader.readAsDataURL(file);
     }
 
-    // শিটস থেকে ফাইলের লিস্ট লোড করা
+    // API থেকে ফাইলের লিস্ট নিয়ে আসার ফাংশন
     function loadFiles() {
       document.getElementById("fileTableBody").innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">Loading files...</td></tr>`;
       
-      google.script.run
-        .withSuccessHandler(function(files) {
+      fetch(API_URL)
+        .then(response => response.json())
+        .then(files => {
           const tbody = document.getElementById("fileTableBody");
           tbody.innerHTML = "";
           
@@ -131,13 +141,16 @@ function updateUserDisplay() {
               <td class="p-3 text-gray-300 font-medium">${file.user}</td>
               <td class="p-3 text-blue-400 truncate max-w-xs">${file.name}</td>
               <td class="p-3 text-center">
-                <a href="${file.url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition">View / Download</a>
+                <a href="${file.url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition">View</a>
               </td>
             `;
             tbody.appendChild(tr);
           });
         })
-        .getFilesList();
+        .catch(err => {
+          document.getElementById("fileTableBody").innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-400">Failed to load files.</td></tr>`;
+          console.error(err);
+        });
     }
   </script>
 </body>
