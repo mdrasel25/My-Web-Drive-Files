@@ -210,6 +210,27 @@
     }
 
     // ফাইল লোড করা (ডাটা আইসোলেশন অনুযায়ী ব্যাকএন্ড থেকে ফিল্টার হয়ে আসবে)
+
+function fileSelected() {
+  const file = fileInput.files[0];
+  if (file) {
+    const fileSizeMB = file.size / 1024 / 1024;
+    
+    // ২৫ মেগাবাইটের বেশি হলে আপলোড ব্লক করবে
+    if (fileSizeMB > 25) {
+      alert("দুঃখিত! আপনি সর্বোচ্চ ২৫ মেগাবাইটের ফাইল আপলোড করতে পারবেন।");
+      fileInput.value = ""; // সিলেক্ট করা ফাইলটি রিমুভ করে দেবে
+      document.getElementById('selectedFileName').classList.add('hidden');
+      document.getElementById('uploadBtn').disabled = true;
+      return;
+    }
+    
+    document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${fileSizeMB.toFixed(2)} MB)`;
+    document.getElementById('selectedFileName').classList.remove('hidden');
+    document.getElementById('uploadBtn').disabled = false;
+  }
+}
+    
     function loadFiles() {
       const tbody = document.getElementById("fileTableBody");
       tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">Loading your secure drive space...</td></tr>`;
