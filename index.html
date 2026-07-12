@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Web Drive</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+  <div class="max-w-5xl mx-auto p-6">
+    <header class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+      <h1 class="text-2xl font-bold text-blue-400">📁 My Personal Cloud Drive</h1>
+      <span class="text-sm bg-gray-800 px-3 py-1 rounded-full text-gray-400" id="userDisplay">Guest User</span>
+    </header>
+
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+      <h2 class="text-lg font-semibold mb-4 text-gray-300">Upload a New File</h2>
+      <div class="flex flex-col sm:flex-row gap-4 items-center">
+        <input type="file" id="fileInput" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+        <input type="email" id="emailInput" oninput="updateUserDisplay()" placeholder="Your Email" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 w-full sm:w-64 text-white focus:outline-none focus:border-blue-500" required>
+        <button onclick="startUpload()" id="uploadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 w-full sm:w-auto">Upload</button>
+      </div>
+      <p id="status" class="mt-3 text-sm hidden"></p>
+    </div>
+
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+      <h2 class="text-lg font-semibold mb-4 text-gray-300">All Stored Files (From Google Sheets)</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-gray-700 text-gray-400 text-sm">
+              <th class="p-3">Date</th>
+              <th class="p-3">Uploaded By</th>
+              <th class="p-3">File Name</th>
+              <th class="p-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="fileTableBody" class="divide-y divide-gray-700 text-sm">
+            </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+// ইউজার ইমেইল টাইপ করলে উপরের ডিসপ্লে আপডেট করার ফাংশন
+function updateUserDisplay() {
+  const emailInput = document.getElementById("emailInput").value;
+  const userDisplay = document.getElementById("userDisplay");
+  if (emailInput) {
+    userDisplay.innerText = emailInput;
+  } else {
+    userDisplay.innerText = "Guest User";
+  }
+}
+
+    // অ্যাপ লোড হওয়ার সাথে সাথে ফাইলের লিস্ট নিয়ে আসা
+    document.addEventListener("DOMContentLoaded", function() {
+      loadFiles();
+    });
+
+    function showStatus(text, isError = false) {
+      const statusEl = document.getElementById("status");
+      statusEl.innerText = text;
+      statusEl.className = `mt-3 text-sm ${isError ? 'text-red-400' : 'text-yellow-400'}`;
+      statusEl.classList.remove("hidden");
+    }
+
+    // ফাইল আপলোড প্রসেস
+    function startUpload() {
+      const fileInput = document.getElementById("fileInput");
+      const emailInput = document.getElementById("emailInput");
+      const uploadBtn = document.getElementById("uploadBtn");
+      
+      if (fileInput.files.length === 0 || !emailInput.value) {
+        alert("Please select a file and enter your email.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      uploadBtn.disabled = true;
+      uploadBtn.innerText = "Uploading...";
+      showStatus("Reading file, please wait...");
+
+      reader.onload = function(e) {
+        const base64Data = e.target.result;
+        
+        // ব্যাকএন্ড গুগল স্ক্রিপ্ট ফাংশন কল করা
+        google.script.run
+          .withSuccessHandler(function(response) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerText = "Upload";
+            
+            if(response.status === 'success') {
+              showStatus("✅ File uploaded successfully!", false);
+              fileInput.value = "";
+              loadFiles(); // লিস্ট রিফ্রেশ করা
+            } else {
+              showStatus("❌ Error: " + response.message, true);
+            }
+          })
+          .uploadFile(base64Data, file.name, emailInput.value);
+      };
+      
+      reader.readAsDataURL(file);
+    }
+
+    // শিটস থেকে ফাইলের লিস্ট লোড করা
+    function loadFiles() {
+      document.getElementById("fileTableBody").innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">Loading files...</td></tr>`;
+      
+      google.script.run
+        .withSuccessHandler(function(files) {
+          const tbody = document.getElementById("fileTableBody");
+          tbody.innerHTML = "";
+          
+          if(files.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">No files found.</td></tr>`;
+            return;
+          }
+
+          files.forEach(file => {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-750 transition";
+            tr.innerHTML = `
+              <td class="p-3 text-gray-400">${file.date}</td>
+              <td class="p-3 text-gray-300 font-medium">${file.user}</td>
+              <td class="p-3 text-blue-400 truncate max-w-xs">${file.name}</td>
+              <td class="p-3 text-center">
+                <a href="${file.url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition">View / Download</a>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .getFilesList();
+    }
+  </script>
+</body>
+</html>
