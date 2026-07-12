@@ -3,23 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Cloud Drive v2.1</title>
-  <!-- Tailwind CSS & Google Sign-In SDK -->
+  <title>Premium Cloud Drive v2.2</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 
-  <!-- LOGIN SCREEN -->
   <div id="loginScreen" class="flex flex-col items-center justify-center min-h-screen bg-gray-950 p-4">
     <div class="bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-800 text-center max-w-sm w-full">
       <h1 class="text-3xl font-bold text-blue-500 mb-2">📁 Secure Drive</h1>
-      <p class="text-gray-400 mb-6 text-sm">গুগল অ্যাকাউন্ট দিয়ে লগইন করে আপনার পার্সোনাল ড্রাইভ অ্যাক্সেস করুন।</p>
+      <p class="text-gray-400 mb-6 text-sm">গুগল অ্যাকাউন্ট দিয়ে লগইন করে আপনার পার্সোনাল ড্রাইভ অ্যাক্সেস করুন।</p>
       
-      <!-- Google Sign-In Button -->
       <div class="flex justify-center">
         <div id="g_id_onload"
-             data-client_id="664981083254-nr44a2c0tjii2aqlteh3rl0h2g8rfehr.apps.googleusercontent.com" <!-- ⚠️ আপনার গুগল ক্লাউড Client ID এখানে দিন -->
+             data-client_id="1jemEVZEGRBhzuMvoR1DIW3RADgW0fp4O?pli=1&sort=13&direction=a"
              data-callback="handleCredentialResponse"
              data-auto_prompt="false">
         </div>
@@ -28,9 +25,7 @@
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
   <div id="dashboard" class="hidden max-w-6xl mx-auto p-4 sm:p-6">
-    <!-- Header -->
     <header class="flex flex-col sm:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4 gap-4">
       <div>
         <h1 class="text-2xl font-bold text-blue-400 flex items-center gap-2">📁 Premium Cloud Drive</h1>
@@ -46,16 +41,14 @@
       </div>
     </header>
 
-    <!-- Upload Box (Drag & Drop + Progress Bar Included) -->
     <div class="bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-800 mb-8">
       <h2 class="text-lg font-semibold mb-3 text-gray-300">Upload File</h2>
       <div id="dropZone" class="border-2 border-dashed border-gray-700 hover:border-blue-500 rounded-xl p-8 text-center cursor-pointer transition bg-gray-950/50">
         <input type="file" id="fileInput" class="hidden" onchange="fileSelected()">
-        <p id="dropZoneText" class="text-gray-400 text-sm">ফাইল এখানে ড্র্যাগ করে ছাড়ুন অথবা <span class="text-blue-400 font-semibold">Browse করুন</span></p>
+        <p id="dropZoneText" class="text-gray-400 text-sm">ফাইল এখানে ড্র্যাগ করে ছাড়ুন অথবা <span class="text-blue-400 font-semibold">Browse করুন</span></p>
         <p id="selectedFileName" class="mt-2 text-sm text-green-400 font-medium hidden"></p>
       </div>
       
-      <!-- 📈 অ্যানিমেটেড প্রোগ্রেস বার -->
       <div id="progressContainer" class="w-full bg-gray-950 border border-gray-800 rounded-full h-3 mt-4 hidden overflow-hidden">
         <div id="progressBar" class="bg-blue-600 h-full rounded-full transition-all duration-150" style="width: 0%"></div>
       </div>
@@ -66,9 +59,8 @@
       <p id="status" class="mt-3 text-sm hidden"></p>
     </div>
 
-    <!-- Search & Filter Controls -->
     <div class="flex flex-col sm:flex-row gap-4 mb-4 items-center justify-between bg-gray-900 p-4 rounded-xl border border-gray-800">
-      <input type="text" id="searchInput" oninput="filterFiles()" placeholder="ফাইলের নাম দিয়ে সার্চ করুন..." class="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-sm">
+      <input type="text" id="searchInput" oninput="filterFiles()" placeholder="ফাইলের নাম দিয়ে সার্চ করুন..." class="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-sm">
       <select id="typeFilter" onchange="filterFiles()" class="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none w-full sm:w-44">
         <option value="all">All File Types</option>
         <option value="image">Images</option>
@@ -77,7 +69,6 @@
       </select>
     </div>
 
-    <!-- Files Table -->
     <div class="bg-gray-900 rounded-2xl shadow-xl border border-gray-800 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -90,14 +81,12 @@
             </tr>
           </thead>
           <tbody id="fileTableBody" class="divide-y divide-gray-800 text-sm">
-            <!-- Data dynamically loads here -->
-          </tbody>
+            </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- FILE PREVIEW MODAL -->
   <div id="previewModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-gray-900 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden border border-gray-800 shadow-2xl">
       <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950">
@@ -111,13 +100,12 @@
   </div>
 
   <script>
-    // ⚠️ এই ভ্যারিয়েবলটি অবশ্যই আপনার নিজস্ব Apps Script Web App URL দিয়ে পরিবর্তন করবেন
+    // ⚠️ নিচের লাইনে আপনার নিজস্ব Apps Script Web App URL (যা শেষে /exec যুক্ত) বসিয়ে দিন
     const API_URL = "https://script.google.com/macros/s/AKfycbz4rJsCkSPnpGzDRuyHNY06sJp-QZW0JY2Zs7EQNv-z4Zn6ix6nUFt1QmeHc4dT2BJb/exec"; 
     
     let allFiles = []; 
     let currentUserEmail = "";
 
-    // ড্র্যাগ অ্যান্ড ড্রপ ফাংশনালিটি সেটআপ
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
 
@@ -133,27 +121,23 @@
       }
     });
 
-    // 🛑 ফাইল সাইজ ভ্যালিডেশন (২৫ মেগাবাইট লিমিট)
     function fileSelected() {
       const file = fileInput.files[0];
       if (file) {
         const fileSizeMB = file.size / 1024 / 1024;
-        
         if (fileSizeMB > 25) {
-          alert("❌ দুঃখিত! সিস্টেমের নিরাপত্তার জন্য আপনি সর্বোচ্চ ২৫ মেগাবাইটের ফাইল আপলোড করতে পারবেন।");
+          alert("❌ সর্বোচ্চ ২৫ মেগাবাইটের ফাইল আপলোড করতে পারবেন।");
           fileInput.value = "";
           document.getElementById('selectedFileName').classList.add('hidden');
           document.getElementById('uploadBtn').disabled = true;
           return;
         }
-        
         document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${fileSizeMB.toFixed(2)} MB)`;
         document.getElementById('selectedFileName').classList.remove('hidden');
         document.getElementById('uploadBtn').disabled = false;
       }
     }
 
-    // Google Sign-In এর রেসপন্স হ্যান্ডেল
     function handleCredentialResponse(response) {
       const responsePayload = parseJwt(response.credential);
       currentUserEmail = responsePayload.email;
@@ -182,6 +166,8 @@
 
     function logout() { window.location.reload(); }
 
+    grid = null;
+
     function showStatus(text, isError = false) {
       const statusEl = document.getElementById("status");
       statusEl.innerText = text;
@@ -189,7 +175,6 @@
       statusEl.classList.remove("hidden");
     }
 
-    // 🚀 প্রোগ্রেস অ্যানিমেশন সহ সংশোধিত ফাইল আপলোড ফাংশন (CORS & Preflight Proof)
     function startUpload() {
       const uploadBtn = document.getElementById("uploadBtn");
       const file = fileInput.files[0];
@@ -206,26 +191,24 @@
       
       showStatus("ফাইল প্রসেস করা হচ্ছে...");
 
-      // স্মুথ সিমুলেটেড প্রোগ্রেস অ্যানিমেশন (গুগলের প্রি-ফ্লাইট OPTIONS এরর এড়ানোর জন্য)
       let fakeProgress = 0;
       const progressInterval = setInterval(() => {
         if (fakeProgress < 90) {
-          fakeProgress += Math.random() * 12; // আস্তে আস্তে প্রোগ্রেস পার্সেন্টেজ বাড়বে
+          fakeProgress += Math.random() * 12;
           if (fakeProgress > 90) fakeProgress = 90;
           progressBar.style.width = Math.round(fakeProgress) + "%";
-          showStatus(`Uploading: ${Math.round(fakeProgress)}% সম্পন্ন হয়েছে...`);
+          showStatus(`Uploading: ${Math.round(fakeProgress)}% সম্পন্ন হয়েছে...`);
         }
       }, 350);
 
       reader.onload = function(e) {
-        showStatus("সার্ভারে ফাইল পাঠানো হচ্ছে, দয়া করে অপেক্ষা করুন...");
+        showStatus("সার্ভারে ফাইল পাঠানো হচ্ছে, দয়া করে অপেক্ষা করুন...");
         
-        // Simple Fetch Request (যা ব্রাউজারের কোনো "Preflight OPTIONS" রিকোয়েস্ট ট্রিগার করবে না)
         fetch(API_URL, {
           method: "POST",
           mode: "cors",
           headers: {
-            "Content-Type": "text/plain;charset=utf-8" // text/plain ব্যবহার করে CORS এবং Preflight ব্লক সম্পূর্ণ এড়ানো হলো
+            "Content-Type": "text/plain;charset=utf-8"
           },
           body: JSON.stringify({
             base64Data: e.target.result,
@@ -237,13 +220,13 @@
         .then(res => res.json())
         .then(res => {
           clearInterval(progressInterval);
-          progressBar.style.width = "100%"; // আপলোড সফলভাবে শেষ হলে প্রোগ্রেস বার ফুল হবে
+          progressBar.style.width = "100%";
           uploadBtn.innerText = "Upload File";
           
           setTimeout(() => {
             progressContainer.classList.add("hidden");
             if(res.status === 'success') {
-              showStatus("✅ ফাইল সফলভাবে আপলোড হয়েছে!", false);
+              showStatus("✅ ফাইল সফলভাবে আপলোড হয়েছে!", false);
               document.getElementById('selectedFileName').classList.add('hidden');
               fileInput.value = "";
               loadFiles();
@@ -258,14 +241,13 @@
           progressContainer.classList.add("hidden");
           uploadBtn.disabled = false;
           uploadBtn.innerText = "Upload File";
-          showStatus("❌ নেটওয়ার্ক কানেকশন এরর! অনুগ্রহ করে Apps Script এর Deploy সেটিং চেক করুন।", true);
+          showStatus("❌ নেটওয়ার্ক কানেকশন এরর! অনুগ্রহ করে Apps Script এর Deploy সেটিং চেক করুন।", true);
           console.error(err);
         });
       };
       reader.readAsDataURL(file);
     }
 
-    // ফাইল ডাটাবেজ থেকে লোড করা
     function loadFiles() {
       const tbody = document.getElementById("fileTableBody");
       tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">Loading your secure drive space...</td></tr>`;
@@ -281,7 +263,6 @@
         });
     }
 
-    // 🎨 ফাইল টাইপ আইকন নির্ধারণের ফাংশন
     function getFileIcon(type) {
       if (!type) return "📄";
       type = type.toLowerCase();
@@ -295,7 +276,6 @@
       return "📁";
     }
 
-    // 💾 ডিরেক্ট ডাউনলোড ইউআরএল তৈরি
     function getDownloadUrl(previewUrl) {
       try {
         const match = previewUrl.match(/[-\w]{25,}/);
@@ -304,10 +284,8 @@
       return previewUrl;
     }
 
-    // 🗑️ ফাইল ডিলিট করার ফ্রন্টএন্ড ফাংশন
     function deleteFile(fileUrl, fileName) {
       if (!confirm(`আপনি কি নিশ্চিতভাবে "${fileName}" ফাইলটি ক্লাউড থেকে ডিলিট করতে চান?`)) return;
-      
       showStatus("ফাইল ডিলিট করা হচ্ছে...");
       
       fetch(API_URL, {
@@ -325,10 +303,10 @@
       .then(res => res.json())
       .then(res => {
         if (res.status === 'success') {
-          showStatus("🗑️ ফাইলটি সফলভাবে ডিলিট করা হয়েছে!");
+          showStatus("🗑️ ফাইলটি সফলভাবে ডিলিট করা হয়েছে!");
           loadFiles();
         } else {
-          showStatus("❌ ডিলিট করা সম্ভব হয়নি: " + res.message, true);
+          showStatus("❌ ডিলিট করা সম্ভব হয়নি: " + res.message, true);
         }
       })
       .catch(err => {
@@ -348,7 +326,6 @@
       files.forEach(file => {
         const tr = document.createElement("tr");
         tr.className = "hover:bg-gray-900/50 transition border-b border-gray-900";
-        
         const icon = getFileIcon(file.type);
         const downloadUrl = getDownloadUrl(file.url);
         
@@ -368,7 +345,6 @@
       });
     }
 
-    // সার্চ এবং ফিল্টারিং লজিক
     function filterFiles() {
       const searchVal = document.getElementById("searchInput").value.toLowerCase();
       const typeFilter = document.getElementById("typeFilter").value;
@@ -383,7 +359,6 @@
         
         return matchesSearch && matchesType;
       });
-      
       renderTable(filtered);
     }
 
