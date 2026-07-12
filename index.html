@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Cloud Drive</title>
+  <title>Premium Cloud Drive v2</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -16,7 +16,7 @@
       
       <div class="flex justify-center">
         <div id="g_id_onload"
-             data-client_id="526434833015-531lvss0pnpmibq7g95ca1s11iabb2lj.apps.googleusercontent.com"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE"
              data-callback="handleCredentialResponse"
              data-auto_prompt="false">
         </div>
@@ -48,9 +48,14 @@
         <p id="dropZoneText" class="text-gray-400 text-sm">ফাইল এখানে ড্র্যাগ করে ছাড়ুন অথবা <span class="text-blue-400 font-semibold">Browse করুন</span></p>
         <p id="selectedFileName" class="mt-2 text-sm text-green-400 font-medium hidden"></p>
       </div>
-      <div id="progressContainer" class="w-full bg-gray-800 rounded-full h-2.5 mt-4 hidden">
-  <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-</div>
+      
+      <div id="progressContainer" class="w-full bg-gray-950 border border-gray-800 rounded-full h-3 mt-4 hidden overflow-hidden">
+        <div id="progressBar" class="bg-blue-600 h-full rounded-full transition-all duration-150" style="width: 0%"></div>
+      </div>
+
+      <div class="flex justify-end mt-4">
+        <button onclick="startUpload()" id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl transition duration-200 w-full sm:w-auto disabled:opacity-50" disabled>Upload File</button>
+      </div>
       <p id="status" class="mt-3 text-sm hidden"></p>
     </div>
 
@@ -96,7 +101,7 @@
 
   <script>
     // ⚠️ এই দুটি ভ্যারিয়েবল অবশ্যই আপনার নিজস্ব আইডি দিয়ে পরিবর্তন করবেন
-    const API_URL = "https://script.google.com/macros/s/AKfycbx2unF2_MpEj6Q_B46Xlq8t07aMKm-GTYGtLH5RQDzwN8jirzlW-IjrIctr-RoRsOwt/exec"; 
+    const API_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE"; 
     
     let allFiles = []; 
     let currentUserEmail = "";
@@ -117,10 +122,21 @@
       }
     });
 
+    // 🛑 ফাইল সাইজ ভ্যালিডেশন (২৫ মেগাবাইট লিমিট)
     function fileSelected() {
       const file = fileInput.files[0];
       if (file) {
-        document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+        const fileSizeMB = file.size / 1024 / 1024;
+        
+        if (fileSizeMB > 25) {
+          alert("❌ দুঃখিত! সিস্টেমের নিরাপত্তার জন্য আপনি সর্বোচ্চ ২৫ মেগাবাইটের ফাইল আপロード করতে পারবেন।");
+          fileInput.value = "";
+          document.getElementById('selectedFileName').classList.add('hidden');
+          document.getElementById('uploadBtn').disabled = true;
+          return;
+        }
+        
+        document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${fileSizeMB.toFixed(2)} MB)`;
         document.getElementById('selectedFileName').classList.remove('hidden');
         document.getElementById('uploadBtn').disabled = false;
       }
@@ -128,7 +144,6 @@
 
     // Google Sign-In এর রেসপন্স হ্যান্ডেল
     function handleCredentialResponse(response) {
-      // JWT টোকেন ডিকোড করে ইউজারের ইমেইল বের করা
       const responsePayload = parseJwt(response.credential);
       currentUserEmail = responsePayload.email;
       
@@ -139,7 +154,6 @@
         document.getElementById("userAvatar").classList.remove("hidden");
       }
 
-      // স্ক্রিন পরিবর্তন
       document.getElementById("loginScreen").classList.add("hidden");
       document.getElementById("dashboard").classList.remove("hidden");
       
@@ -155,18 +169,16 @@
       return JSON.parse(jsonPayload);
     }
 
-    function logout() {
-      window.location.reload();
-    }
+    function logout() { window.location.reload(); }
 
     function showStatus(text, isError = false) {
       const statusEl = document.getElementById("status");
       statusEl.innerText = text;
-      statusEl.className = `mt-3 text-sm ${isError ? 'text-red-400' : 'text-yellow-400'}`;
+      statusEl.className = `mt-3 text-sm ${isError ? 'text-red-400' : 'text-blue-400 font-medium'}`;
       statusEl.classList.remove("hidden");
     }
 
-    // ফাইল আপলোড প্রসেস
+    // 🚀 প্রোগ্রেস বার ট্র্যাকিং সহ ফাইল আপলোড ফাংশন
     function startUpload() {
       const uploadBtn = document.getElementById("uploadBtn");
       const file = fileInput.files[0];
@@ -174,63 +186,67 @@
 
       const reader = new FileReader();
       uploadBtn.disabled = true;
-      uploadBtn.innerText = "Uploading...";
-      showStatus("Processing file, please wait...");
+      uploadBtn.innerText = "Processing...";
+      
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBar = document.getElementById("progressBar");
+      progressContainer.classList.remove("hidden");
+      progressBar.style.width = "0%";
+      
+      showStatus("ফাইল রিড করা হচ্ছে, দয়া করে অপেক্ষা করুন...");
 
       reader.onload = function(e) {
-        fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            base64Data: e.target.result,
-            fileName: file.name,
-            userEmail: currentUserEmail,
-            fileType: file.type
-          })
-        })
-        .then(res => res.json())
-        .then(res => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", API_URL, true);
+        
+        // রিয়েল-টাইম আপলোড প্রোগ্রেস ট্র্যাকিং লজিক
+        xhr.upload.onprogress = function(event) {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            progressBar.style.width = percentComplete + "%";
+            showStatus(`Uploading: ${percentComplete}% সম্পন্ন হয়েছে...`);
+          }
+        };
+
+        xhr.onload = function() {
           uploadBtn.innerText = "Upload File";
-          if(res.status === 'success') {
-            showStatus("✅ Upload Successful!", false);
-            document.getElementById('selectedFileName').classList.add('hidden');
-            fileInput.value = "";
-            loadFiles();
+          progressContainer.classList.add("hidden");
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const res = JSON.parse(xhr.responseText);
+            if(res.status === 'success') {
+              showStatus("✅ ফাইল সফলভাবে আপলোড হয়েছে!", false);
+              document.getElementById('selectedFileName').classList.add('hidden');
+              fileInput.value = "";
+              loadFiles();
+            } else {
+              showStatus("❌ এরর: " + res.message, true);
+              uploadBtn.disabled = false;
+            }
           } else {
-            showStatus("❌ Error: " + res.message, true);
+            showStatus("❌ সার্ভার রেসপন্স ফেইলড!", true);
             uploadBtn.disabled = false;
           }
-        })
-        .catch(err => {
+        };
+
+        xhr.onerror = function() {
           uploadBtn.disabled = false;
           uploadBtn.innerText = "Upload File";
-          showStatus("❌ Connection Timeout!", true);
-        });
+          progressContainer.classList.add("hidden");
+          showStatus("❌ নেটওয়ার্ক কানেকশন এরর!", true);
+        };
+
+        xhr.send(JSON.stringify({
+          base64Data: e.target.result,
+          fileName: file.name,
+          userEmail: currentUserEmail,
+          fileType: file.type
+        }));
       };
       reader.readAsDataURL(file);
     }
 
-    // ফাইল লোড করা (ডাটা আইসোলেশন অনুযায়ী ব্যাকএন্ড থেকে ফিল্টার হয়ে আসবে)
-
-function fileSelected() {
-  const file = fileInput.files[0];
-  if (file) {
-    const fileSizeMB = file.size / 1024 / 1024;
-    
-    // ২৫ মেগাবাইটের বেশি হলে আপলোড ব্লক করবে
-    if (fileSizeMB > 25) {
-      alert("দুঃখিত! আপনি সর্বোচ্চ ২৫ মেগাবাইটের ফাইল আপলোড করতে পারবেন।");
-      fileInput.value = ""; // সিলেক্ট করা ফাইলটি রিমুভ করে দেবে
-      document.getElementById('selectedFileName').classList.add('hidden');
-      document.getElementById('uploadBtn').disabled = true;
-      return;
-    }
-    
-    document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${fileSizeMB.toFixed(2)} MB)`;
-    document.getElementById('selectedFileName').classList.remove('hidden');
-    document.getElementById('uploadBtn').disabled = false;
-  }
-}
-    
+    // ফাইল লোড করা
     function loadFiles() {
       const tbody = document.getElementById("fileTableBody");
       tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">Loading your secure drive space...</td></tr>`;
@@ -238,12 +254,63 @@ function fileSelected() {
       fetch(`${API_URL}?email=${encodeURIComponent(currentUserEmail)}`)
         .then(res => res.json())
         .then(files => {
-          allFiles = files; // গ্লোবাল ভ্যারিয়েবলে সেভ করে রাখা সার্চ করার জন্য
+          allFiles = files;
           renderTable(allFiles);
         })
         .catch(err => {
           tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-400">Error loading file list.</td></tr>`;
         });
+    }
+
+    // 🎨 ফাইল টাইপ আইকন নির্ধারণের ফাংশন
+    function getFileIcon(type) {
+      if (!type) return "📄";
+      type = type.toLowerCase();
+      if (type.startsWith("image/")) return "🖼️";
+      if (type.includes("pdf")) return "📄";
+      if (type.startsWith("video/")) return "🎬";
+      if (type.startsWith("audio/")) return "🎵";
+      if (type.includes("zip") || type.includes("rar")) return "📦";
+      if (type.includes("sheet") || type.includes("excel") || type.includes("csv")) return "📊";
+      if (type.includes("word") || type.includes("document")) return "📝";
+      return "📁";
+    }
+
+    // 💾 ডিরেক্ট ডাউনলোড ইউআরএল তৈরি
+    function getDownloadUrl(previewUrl) {
+      try {
+        const match = previewUrl.match(/[-\w]{25,}/);
+        if (match) return `https://docs.google.com/uc?export=download&id=${match[0]}`;
+      } catch(e) {}
+      return previewUrl;
+    }
+
+    // 🗑️ ফাইল ডিলিট করার ফ্রন্টএন্ড ফাংশন
+    function deleteFile(fileUrl, fileName) {
+      if (!confirm(`আপনি কি নিশ্চিতভাবে "${fileName}" ফাইলটি ক্লাউড থেকে ডিলিট করতে চান?`)) return;
+      
+      showStatus("ফাইল ডিলিট করা হচ্ছে...");
+      
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "delete",
+          fileUrl: fileUrl,
+          userEmail: currentUserEmail
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === 'success') {
+          showStatus("🗑️ ফাইলটি সফলভাবে ডিলিট করা হয়েছে!");
+          loadFiles();
+        } else {
+          showStatus("❌ ডিলিট করা সম্ভব হয়নি: " + res.message, true);
+        }
+      })
+      .catch(err => {
+        showStatus("❌ কানেকশন এরর!", true);
+      });
     }
 
     function renderTable(files) {
@@ -258,20 +325,27 @@ function fileSelected() {
       files.forEach(file => {
         const tr = document.createElement("tr");
         tr.className = "hover:bg-gray-900/50 transition border-b border-gray-900";
+        
+        const icon = getFileIcon(file.type);
+        const downloadUrl = getDownloadUrl(file.url);
+        
         tr.innerHTML = `
           <td class="p-4 text-gray-400 text-xs sm:text-sm whitespace-nowrap">${file.date}</td>
           <td class="p-4 text-gray-300 font-medium text-xs sm:text-sm max-w-[120px] truncate">${file.user}</td>
-          <td class="p-4 text-blue-400 font-medium truncate max-w-[180px] sm:max-w-xs">${file.name}</td>
-          <td class="p-4 text-center flex items-center justify-center gap-2">
-            <button onclick="openPreview('${file.url}', '${file.name}')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-3 py-1.5 rounded-xl border border-gray-700 transition">Preview</button>
-            <a href="${file.url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-xl transition">Open Link</a>
+          <td class="p-4 text-blue-400 font-medium truncate max-w-[180px] sm:max-w-xs">
+            <span class="mr-2">${icon}</span>${file.name}
+          </td>
+          <td class="p-4 text-center flex items-center justify-center gap-2 flex-wrap sm:flex-nowrap">
+            <button onclick="openPreview('${file.url}', '${file.name}')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-2.5 py-1.5 rounded-xl border border-gray-700 transition">Preview</button>
+            <a href="${downloadUrl}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded-xl transition">Download</a>
+            <button onclick="deleteFile('${file.url}', '${file.name}')" class="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white text-xs px-2.5 py-1.5 rounded-xl transition border border-red-500/20">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // সার্চ এবং ফিল্টারিং লজিক (Client-side)
+    // সার্চ এবং ফিল্টারিং লজিক
     function filterFiles() {
       const searchVal = document.getElementById("searchInput").value.toLowerCase();
       const typeFilter = document.getElementById("typeFilter").value;
@@ -290,7 +364,6 @@ function fileSelected() {
       renderTable(filtered);
     }
 
-    // প্রিভিউ মোডাল ফাংশনস
     function openPreview(url, name) {
       document.getElementById("modalTitle").innerText = name;
       document.getElementById("previewIframe").src = url;
