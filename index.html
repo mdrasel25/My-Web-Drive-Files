@@ -1,60 +1,162 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Professional Web Drive</title>
+  <title>Premium Cloud Drive</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 
-  <div class="max-w-5xl mx-auto p-6">
-    <header class="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
-      <h1 class="text-2xl font-bold text-blue-400">📁 My Personal Cloud Drive</h1>
-      <span class="text-sm bg-gray-800 px-3 py-1 rounded-full text-gray-400" id="userDisplay">Guest User</span>
+  <div id="loginScreen" class="flex flex-col items-center justify-center min-h-screen bg-gray-950 p-4">
+    <div class="bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-800 text-center max-w-sm w-full">
+      <h1 class="text-3xl font-bold text-blue-500 mb-2">📁 Secure Drive</h1>
+      <p class="text-gray-400 mb-6 text-sm">গুগল অ্যাকাউন্ট দিয়ে লগইন করে আপনার পার্সোনাল ড্রাইভ অ্যাক্সেস করুন।</p>
+      
+      <div class="flex justify-center">
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_blue" data-text="sign_in_with" data-shape="rectangular"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dashboard" class="hidden max-w-6xl mx-auto p-4 sm:p-6">
+    <header class="flex flex-col sm:flex-row justify-between items-center mb-8 border-b border-gray-800 pb-4 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-blue-400 flex items-center gap-2">📁 Premium Cloud Drive</h1>
+        <p class="text-xs text-gray-500">Secure Backend with Google Sheets</p>
+      </div>
+      <div class="flex items-center gap-3 bg-gray-900 px-4 py-2 rounded-xl border border-gray-800">
+        <img id="userAvatar" src="" class="w-8 h-8 rounded-full border border-blue-500 hidden">
+        <div>
+          <p id="userName" class="text-sm font-medium text-gray-200"></p>
+          <p id="userDisplay" class="text-xs text-gray-400"></p>
+        </div>
+        <button onclick="logout()" class="ml-2 text-xs text-red-400 hover:text-red-300 transition">Logout</button>
+      </div>
     </header>
 
-    <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
-      <h2 class="text-lg font-semibold mb-4 text-gray-300">Upload a New File</h2>
-      <div class="flex flex-col sm:flex-row gap-4 items-center">
-        <input type="file" id="fileInput" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
-        <input type="email" id="emailInput" oninput="updateUserDisplay()" placeholder="Your Email" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 w-full sm:w-64 text-white focus:outline-none focus:border-blue-500" required>
-        <button onclick="startUpload()" id="uploadBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 w-full sm:w-auto">Upload</button>
+    <div class="bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-800 mb-8">
+      <h2 class="text-lg font-semibold mb-3 text-gray-300">Upload File</h2>
+      <div id="dropZone" class="border-2 border-dashed border-gray-700 hover:border-blue-500 rounded-xl p-8 text-center cursor-pointer transition bg-gray-950/50">
+        <input type="file" id="fileInput" class="hidden" onchange="fileSelected()">
+        <p id="dropZoneText" class="text-gray-400 text-sm">ফাইল এখানে ড্র্যাগ করে ছাড়ুন অথবা <span class="text-blue-400 font-semibold">Browse করুন</span></p>
+        <p id="selectedFileName" class="mt-2 text-sm text-green-400 font-medium hidden"></p>
+      </div>
+      <div class="flex justify-end mt-4">
+        <button onclick="startUpload()" id="uploadBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-xl transition duration-200 w-full sm:w-auto disabled:opacity-50" disabled>Upload File</button>
       </div>
       <p id="status" class="mt-3 text-sm hidden"></p>
     </div>
 
-    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-      <h2 class="text-lg font-semibold mb-4 text-gray-300">All Stored Files</h2>
+    <div class="flex flex-col sm:flex-row gap-4 mb-4 items-center justify-between bg-gray-900 p-4 rounded-xl border border-gray-800">
+      <input type="text" id="searchInput" oninput="filterFiles()" placeholder="ফাইলের নাম দিয়ে সার্চ করুন..." class="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 w-full sm:w-72 text-white focus:outline-none focus:border-blue-500 text-sm">
+      <select id="typeFilter" onchange="filterFiles()" class="bg-gray-950 border border-gray-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none w-full sm:w-44">
+        <option value="all">All File Types</option>
+        <option value="image">Images</option>
+        <option value="pdf">PDF Documents</option>
+        <option value="other">Others</option>
+      </select>
+    </div>
+
+    <div class="bg-gray-900 rounded-2xl shadow-xl border border-gray-800 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="border-b border-gray-700 text-gray-400 text-sm">
-              <th class="p-3">Date</th>
-              <th class="p-3">Uploaded By</th>
-              <th class="p-3">File Name</th>
-              <th class="p-3 text-center">Action</th>
+            <tr class="bg-gray-950 border-b border-gray-800 text-gray-400 text-xs tracking-wider uppercase">
+              <th class="p-4">Date</th>
+              <th class="p-4">Owner</th>
+              <th class="p-4">File Name</th>
+              <th class="p-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody id="fileTableBody" class="divide-y divide-gray-700 text-sm">
+          <tbody id="fileTableBody" class="divide-y divide-gray-800 text-sm">
             </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <script>
-    // ⚠️ এখানে আপনার গুগল অ্যাপস স্ক্রিপ্ট থেকে পাওয়া Web App URL-টি বসান
-    const API_URL = "https://script.google.com/macros/s/AKfycbxXooLoATgP8iygcnLvI8FuUiNDq7-fKXQKleRIWHHzhV5MhZTx4MLw4BOCndcpaQd94g/exec";
+  <div id="previewModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-gray-900 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden border border-gray-800 shadow-2xl">
+      <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-950">
+        <h3 id="modalTitle" class="font-semibold text-gray-200 truncate pr-4">File Preview</h3>
+        <button onclick="closePreview()" class="text-gray-400 hover:text-white font-bold text-xl px-2">&times;</button>
+      </div>
+      <div class="flex-1 bg-black">
+        <iframe id="previewIframe" src="" class="w-full h-full border-0"></iframe>
+      </div>
+    </div>
+  </div>
 
-    document.addEventListener("DOMContentLoaded", function() {
-      loadFiles();
+  <script>
+    // ⚠️ এই দুটি ভ্যারিয়েবল অবশ্যই আপনার নিজস্ব আইডি দিয়ে পরিবর্তন করবেন
+    const API_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE"; 
+    
+    let allFiles = []; 
+    let currentUserEmail = "";
+
+    // ড্র্যাগ অ্যান্ড ড্রপ ফাংশনালিটি সেটআপ
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-500', 'bg-blue-950/10'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-blue-500', 'bg-blue-950/10'); });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500', 'bg-blue-950/10');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        fileSelected();
+      }
     });
 
-    function updateUserDisplay() {
-      const emailInput = document.getElementById("emailInput").value;
-      const userDisplay = document.getElementById("userDisplay");
-      userDisplay.innerText = emailInput ? emailInput : "Guest User";
+    function fileSelected() {
+      const file = fileInput.files[0];
+      if (file) {
+        document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+        document.getElementById('selectedFileName').classList.remove('hidden');
+        document.getElementById('uploadBtn').disabled = false;
+      }
+    }
+
+    // Google Sign-In এর রেসপন্স হ্যান্ডেল
+    function handleCredentialResponse(response) {
+      // JWT টোকেন ডিকোড করে ইউজারের ইমেইল বের করা
+      const responsePayload = parseJwt(response.credential);
+      currentUserEmail = responsePayload.email;
+      
+      document.getElementById("userName").innerText = responsePayload.name;
+      document.getElementById("userDisplay").innerText = currentUserEmail;
+      if(responsePayload.picture) {
+        document.getElementById("userAvatar").src = responsePayload.picture;
+        document.getElementById("userAvatar").classList.remove("hidden");
+      }
+
+      // স্ক্রিন পরিবর্তন
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+      
+      loadFiles();
+    }
+
+    function parseJwt(token) {
+      var base64Url = token.split('.')[1];
+      var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('0' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    function logout() {
+      window.location.reload();
     }
 
     function showStatus(text, isError = false) {
@@ -64,93 +166,119 @@
       statusEl.classList.remove("hidden");
     }
 
-    // API এর মাধ্যমে ফাইল আপলোড করার ফাংশন
+    // ফাইল আপলোড প্রসেস
     function startUpload() {
-      const fileInput = document.getElementById("fileInput");
-      const emailInput = document.getElementById("emailInput");
       const uploadBtn = document.getElementById("uploadBtn");
-      
-      if (fileInput.files.length === 0 || !emailInput.value) {
-        alert("Please select a file and enter your email.");
-        return;
-      }
-
       const file = fileInput.files[0];
+      if (!file) return;
+
       const reader = new FileReader();
-      
       uploadBtn.disabled = true;
       uploadBtn.innerText = "Uploading...";
-      showStatus("Reading file, please wait...");
+      showStatus("Processing file, please wait...");
 
       reader.onload = function(e) {
-        const base64Data = e.target.result;
-        
-        // standard fetch API ব্যবহার করে ব্যাকএন্ডে ডাটা পাঠানো
         fetch(API_URL, {
           method: "POST",
           body: JSON.stringify({
-            base64Data: base64Data,
+            base64Data: e.target.result,
             fileName: file.name,
-            userEmail: emailInput.value
+            userEmail: currentUserEmail,
+            fileType: file.type
           })
         })
-        .then(response => response.json())
-        .then(response => {
-          uploadBtn.disabled = false;
-          uploadBtn.innerText = "Upload";
-          
-          if(response.status === 'success') {
-            showStatus("✅ File uploaded successfully!", false);
+        .then(res => res.json())
+        .then(res => {
+          uploadBtn.innerText = "Upload File";
+          if(res.status === 'success') {
+            showStatus("✅ Upload Successful!", false);
+            document.getElementById('selectedFileName').classList.add('hidden');
             fileInput.value = "";
             loadFiles();
           } else {
-            showStatus("❌ Error: " + response.message, true);
+            showStatus("❌ Error: " + res.message, true);
+            uploadBtn.disabled = false;
           }
         })
         .catch(err => {
           uploadBtn.disabled = false;
-          uploadBtn.innerText = "Upload";
-          showStatus("❌ Connection Error!", true);
-          console.error(err);
+          uploadBtn.innerText = "Upload File";
+          showStatus("❌ Connection Timeout!", true);
         });
       };
-      
       reader.readAsDataURL(file);
     }
 
-    // API থেকে ফাইলের লিস্ট নিয়ে আসার ফাংশন
+    // ফাইল লোড করা (ডাটা আইসোলেশন অনুযায়ী ব্যাকএন্ড থেকে ফিল্টার হয়ে আসবে)
     function loadFiles() {
-      document.getElementById("fileTableBody").innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">Loading files...</td></tr>`;
+      const tbody = document.getElementById("fileTableBody");
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">Loading your secure drive space...</td></tr>`;
       
-      fetch(API_URL)
-        .then(response => response.json())
+      fetch(`${API_URL}?email=${encodeURIComponent(currentUserEmail)}`)
+        .then(res => res.json())
         .then(files => {
-          const tbody = document.getElementById("fileTableBody");
-          tbody.innerHTML = "";
-          
-          if(files.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">No files found.</td></tr>`;
-            return;
-          }
-
-          files.forEach(file => {
-            const tr = document.createElement("tr");
-            tr.className = "hover:bg-gray-750 transition";
-            tr.innerHTML = `
-              <td class="p-3 text-gray-400">${file.date}</td>
-              <td class="p-3 text-gray-300 font-medium">${file.user}</td>
-              <td class="p-3 text-blue-400 truncate max-w-xs">${file.name}</td>
-              <td class="p-3 text-center">
-                <a href="${file.url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded transition">View</a>
-              </td>
-            `;
-            tbody.appendChild(tr);
-          });
+          allFiles = files; // গ্লোবাল ভ্যারিয়েবলে সেভ করে রাখা সার্চ করার জন্য
+          renderTable(allFiles);
         })
         .catch(err => {
-          document.getElementById("fileTableBody").innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-400">Failed to load files.</td></tr>`;
-          console.error(err);
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-400">Error loading file list.</td></tr>`;
         });
+    }
+
+    function renderTable(files) {
+      const tbody = document.getElementById("fileTableBody");
+      tbody.innerHTML = "";
+      
+      if(files.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No files found matching criteria.</td></tr>`;
+        return;
+      }
+
+      files.forEach(file => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-900/50 transition border-b border-gray-900";
+        tr.innerHTML = `
+          <td class="p-4 text-gray-400 text-xs sm:text-sm whitespace-nowrap">${file.date}</td>
+          <td class="p-4 text-gray-300 font-medium text-xs sm:text-sm max-w-[120px] truncate">${file.user}</td>
+          <td class="p-4 text-blue-400 font-medium truncate max-w-[180px] sm:max-w-xs">${file.name}</td>
+          <td class="p-4 text-center flex items-center justify-center gap-2">
+            <button onclick="openPreview('${file.url}', '${file.name}')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-3 py-1.5 rounded-xl border border-gray-700 transition">Preview</button>
+            <a href="${file.url}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-xl transition">Open Link</a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // সার্চ এবং ফিল্টারিং লজিক (Client-side)
+    function filterFiles() {
+      const searchVal = document.getElementById("searchInput").value.toLowerCase();
+      const typeFilter = document.getElementById("typeFilter").value;
+      
+      const filtered = allFiles.filter(file => {
+        const matchesSearch = file.name.toLowerCase().includes(searchVal);
+        let matchesType = true;
+        
+        if (typeFilter === "image") matchesType = file.type.startsWith("image/");
+        else if (typeFilter === "pdf") matchesType = file.type.includes("pdf");
+        else if (typeFilter === "other") matchesType = !file.type.startsWith("image/") && !file.type.includes("pdf");
+        
+        return matchesSearch && matchesType;
+      });
+      
+      renderTable(filtered);
+    }
+
+    // প্রিভিউ মোডাল ফাংশনস
+    function openPreview(url, name) {
+      document.getElementById("modalTitle").innerText = name;
+      document.getElementById("previewIframe").src = url;
+      document.getElementById("previewModal").classList.remove("hidden");
+    }
+
+    function closePreview() {
+      document.getElementById("previewModal").classList.add("hidden");
+      document.getElementById("previewIframe").src = "";
     }
   </script>
 </body>
