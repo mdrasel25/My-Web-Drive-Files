@@ -126,7 +126,7 @@
       if (file) {
         const fileSizeMB = file.size / 1024 / 1024;
         if (fileSizeMB > 100) {
-          alert("❌ সর্বোচ্চ ২৫ মেগাবাইটের ফাইল আপলোড করতে পারবেন।");
+          alert("❌ সর্বোচ্চ 100 মেগাবাইটের ফাইল আপলোড করতে পারবেন।");
           fileInput.value = "";
           document.getElementById('selectedFileName').classList.add('hidden');
           document.getElementById('uploadBtn').disabled = true;
