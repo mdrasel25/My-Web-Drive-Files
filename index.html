@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Cloud Drive v2.3</title>
+  <title>Premium Cloud Drive v2.4</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -31,13 +31,15 @@
         <h1 class="text-2xl font-bold text-blue-400 flex items-center gap-2">📁 Premium Cloud Drive</h1>
         <p class="text-xs text-gray-500">Secure Backend with Google Sheets</p>
       </div>
-      <div class="flex items-center gap-3 bg-gray-900 px-4 py-2 rounded-xl border border-gray-800">
-        <img id="userAvatar" src="" class="w-8 h-8 rounded-full border border-blue-500 hidden">
-        <div>
-          <p id="userName" class="text-sm font-medium text-gray-200"></p>
-          <p id="userDisplay" class="text-xs text-gray-400"></p>
+      <div class="flex items-center gap-3 bg-gray-900 px-4 py-2 rounded-xl border border-gray-800 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center gap-2">
+          <img id="userAvatar" src="" class="w-8 h-8 rounded-full border border-blue-500 hidden">
+          <div>
+            <p id="userName" class="text-sm font-medium text-gray-200"></p>
+            <p id="userDisplay" class="text-xs text-gray-400"></p>
+          </div>
         </div>
-        <button onclick="logout()" class="ml-2 text-xs text-red-400 hover:text-red-300 transition">Logout</button>
+        <button onclick="logout()" class="ml-2 text-xs text-red-400 hover:text-red-300 transition shrink-0">Logout</button>
       </div>
     </header>
 
@@ -46,7 +48,7 @@
       <div id="dropZone" class="border-2 border-dashed border-gray-700 hover:border-blue-500 rounded-xl p-8 text-center cursor-pointer transition bg-gray-950/50">
         <input type="file" id="fileInput" class="hidden" onchange="fileSelected()">
         <p id="dropZoneText" class="text-gray-400 text-sm">ফাইল এখানে ড্র্যাগ করে ছাড়ুন অথবা <span class="text-blue-400 font-semibold">Browse করুন</span></p>
-        <p id="selectedFileName" class="mt-2 text-sm text-green-400 font-medium hidden"></p>
+        <p id="selectedFileName" class="mt-2 text-sm text-green-400 font-medium hidden break-all"></p>
       </div>
       
       <div id="progressContainer" class="w-full bg-gray-950 border border-gray-800 rounded-full h-3 mt-4 hidden overflow-hidden">
@@ -55,7 +57,7 @@
 
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-3 gap-2">
         <p id="status" class="text-sm hidden"></p>
-        <button id="cancelUploadBtn" onclick="cancelUpload()" class="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 font-semibold py-1.5 px-4 rounded-xl text-xs transition duration-200 hidden">
+        <button id="cancelUploadBtn" onclick="cancelUpload()" class="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 font-semibold py-1.5 px-4 rounded-xl text-xs transition duration-200 hidden w-full sm:w-auto text-center">
           ❌ Cancel Upload
         </button>
       </div>
@@ -76,20 +78,15 @@
     </div>
 
     <div class="bg-gray-900 rounded-2xl shadow-xl border border-gray-800 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-950 border-b border-gray-800 text-gray-400 text-xs tracking-wider uppercase">
-              <th class="p-4">Date</th>
-              <th class="p-4">Owner</th>
-              <th class="p-4">File Name</th>
-              <th class="p-4 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="fileTableBody" class="divide-y divide-gray-800 text-sm">
-            </tbody>
-        </table>
+      <div class="hidden sm:grid sm:grid-cols-12 bg-gray-950 border-b border-gray-800 text-gray-400 text-xs tracking-wider uppercase p-4 font-semibold">
+        <div class="sm:col-span-2">Date</div>
+        <div class="sm:col-span-2">Owner</div>
+        <div class="sm:col-span-5">File Name</div>
+        <div class="sm:col-span-3 text-center">Actions</div>
       </div>
+      
+      <div id="filesListContainer" class="divide-y divide-gray-800 text-sm">
+        </div>
     </div>
   </div>
 
@@ -106,13 +103,13 @@
   </div>
 
   <script>
-    // ⚠️ আপনার Apps Script Web App URL এখানে দিন
+    // ⚠️ আপনার নিজস্ব Apps Script URL এখানে দিন
     const API_URL = "https://script.google.com/macros/s/AKfycbwwTrMaV544a3r5pqY7Wrn0oUPStE04VPTXwnMWNBXcI-WQOJJRC4mfPyg0_3FHQd4q3w/exec"; 
     
     let allFiles = []; 
     let currentUserEmail = "";
-    let uploadController = null;   // ⚡ আপলোড রিকোয়েস্ট ক্যানসেল করার কন্ট্রোলার
-    let progressInterval = null;   // ⚡ অ্যানিমেশন টাইমার গ্লোবাল করা হলো
+    let uploadController = null;   
+    let progressInterval = null;   
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -172,6 +169,7 @@
       return JSON.parse(jsonPayload);
     }
 
+    // লগআউট
     function logout() { window.location.reload(); }
 
     function showStatus(text, isError = false) {
@@ -181,7 +179,6 @@
       statusEl.classList.remove("hidden");
     }
 
-    // 🚀 ফাইল আপলোড ফাংশন (ক্যানসেল সাপোর্টসহ)
     function startUpload() {
       const uploadBtn = document.getElementById("uploadBtn");
       const cancelBtn = document.getElementById("cancelUploadBtn");
@@ -211,9 +208,8 @@
 
       reader.onload = function(e) {
         showStatus("সার্ভারে ফাইল পাঠানো হচ্ছে, দয়া করে অপেক্ষা করুন...");
-        cancelBtn.classList.remove("hidden"); // আপলোড শুরু হলে ক্যানসেল বাটন দেখাবে
+        cancelBtn.classList.remove("hidden"); 
 
-        // নতুন AbortController তৈরি করা হলো নেটওয়ার্ক রিকোয়েস্ট ট্র্যাক করার জন্য
         uploadController = new AbortController();
 
         fetch(API_URL, {
@@ -228,7 +224,7 @@
             userEmail: currentUserEmail,
             fileType: file.type
           }),
-          signal: uploadController.signal // সিগন্যালটি ফেচ রিকোয়েস্টে পাস করা হলো
+          signal: uploadController.signal 
         })
         .then(res => res.json())
         .then(res => {
@@ -254,7 +250,6 @@
           clearInterval(progressInterval);
           cancelBtn.classList.add("hidden");
           
-          // ইউজার নিজে ক্যানসেল করলে এই ব্লকটি রান হবে
           if (err.name === 'AbortError') {
             showStatus("❌ ফাইল আপলোডটি আপনার অনুরোধে বাতিল করা হয়েছে।", true);
             setTimeout(() => { document.getElementById("status").classList.add("hidden"); }, 3000);
@@ -270,16 +265,10 @@
       reader.readAsDataURL(file);
     }
 
-    // 🛑 আপলোড বাতিল করার ফাংশন
     function cancelUpload() {
-      if (uploadController) {
-        uploadController.abort(); // ফেচ রিকোয়েস্ট মাঝপথেই কেটে দেবে
-      }
-      if (progressInterval) {
-        clearInterval(progressInterval); // অ্যানিমেশন টাইমার বন্ধ করবে
-      }
+      if (uploadController) uploadController.abort();
+      if (progressInterval) clearInterval(progressInterval);
       
-      // UI রিসেট করা
       document.getElementById("cancelUploadBtn").classList.add("hidden");
       document.getElementById("progressContainer").classList.add("hidden");
       
@@ -289,8 +278,8 @@
     }
 
     function loadFiles() {
-      const tbody = document.getElementById("fileTableBody");
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">Loading your secure drive space...</td></tr>`;
+      const container = document.getElementById("filesListContainer");
+      container.innerHTML = `<div class="text-center p-6 text-gray-500">Loading your secure drive space...</div>`;
       
       fetch(`${API_URL}?email=${encodeURIComponent(currentUserEmail)}`)
         .then(res => res.json())
@@ -299,7 +288,7 @@
           renderTable(allFiles);
         })
         .catch(err => {
-          tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-red-400">Error loading file list.</td></tr>`;
+          container.innerHTML = `<div class="text-center p-6 text-red-400">Error loading file list.</div>`;
         });
     }
 
@@ -354,34 +343,46 @@
       });
     }
 
+    // ⚡ রেসপনসিভ রেন্ডারিং ফাংশন (টেবিল টু কার্ড জাদুকরী লেআউট)
     function renderTable(files) {
-      const tbody = document.getElementById("fileTableBody");
-      tbody.innerHTML = "";
+      const container = document.getElementById("filesListContainer");
+      container.innerHTML = "";
       
       if(files.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-gray-500">No files found matching criteria.</td></tr>`;
+        container.innerHTML = `<div class="text-center p-6 text-gray-500">No files found matching criteria.</div>`;
         return;
       }
 
       files.forEach(file => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-gray-900/50 transition border-b border-gray-900";
+        const div = document.createElement("div");
+        // মোবাইলে ফ্লেক্স কলাম (কার্ড), কম্পিউটারে গ্রিড কলাম লেআউট
+        div.className = "p-4 bg-gray-900 flex flex-col gap-3 sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 hover:bg-gray-900/50 transition";
         const icon = getFileIcon(file.type);
         const downloadUrl = getDownloadUrl(file.url);
         
-        tr.innerHTML = `
-          <td class="p-4 text-gray-400 text-xs sm:text-sm whitespace-nowrap">${file.date}</td>
-          <td class="p-4 text-gray-300 font-medium text-xs sm:text-sm max-w-[120px] truncate">${file.user}</td>
-          <td class="p-4 text-blue-400 font-medium truncate max-w-[180px] sm:max-w-xs">
-            <span class="mr-2">${icon}</span>${file.name}
-          </td>
-          <td class="p-4 text-center flex items-center justify-center gap-2 flex-wrap sm:flex-nowrap">
-            <button onclick="openPreview('${file.url}', '${file.name}')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-2.5 py-1.5 rounded-xl border border-gray-700 transition">Preview</button>
-            <a href="${downloadUrl}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-1.5 rounded-xl transition">Download</a>
-            <button onclick="deleteFile('${file.url}', '${file.name}')" class="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white text-xs px-2.5 py-1.5 rounded-xl transition border border-red-500/20">Delete</button>
-          </td>
+        div.innerHTML = `
+          <div class="sm:col-span-5 order-1 sm:order-3 font-medium text-blue-400 flex items-center min-w-0">
+            <span class="mr-2 flex-shrink-0 text-lg">${icon}</span>
+            <span class="truncate break-all">${file.name}</span>
+          </div>
+
+          <div class="sm:col-span-2 order-2 sm:order-1 text-xs sm:text-sm text-gray-400 flex sm:block items-center justify-between">
+            <span class="sm:hidden text-gray-500 uppercase tracking-wider font-semibold text-[10px]">Date:</span>
+            <span>${file.date}</span>
+          </div>
+
+          <div class="sm:col-span-2 order-3 sm:order-2 text-xs sm:text-sm text-gray-300 flex sm:block items-center justify-between min-w-0">
+            <span class="sm:hidden text-gray-500 uppercase tracking-wider font-semibold text-[10px]">Owner:</span>
+            <span class="truncate max-w-[180px] sm:max-w-none">${file.user}</span>
+          </div>
+
+          <div class="sm:col-span-3 order-4 flex items-center justify-between sm:justify-center gap-2 mt-1 sm:mt-0 pt-3 sm:pt-0 border-t border-gray-800/80 sm:border-t-0 w-full">
+            <button onclick="openPreview('${file.url}', '${file.name}')" class="flex-1 sm:flex-none bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-2.5 py-2 rounded-xl border border-gray-700 transition text-center">Preview</button>
+            <a href="${downloadUrl}" target="_blank" class="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white text-xs px-2.5 py-2 rounded-xl transition text-center">Download</a>
+            <button onclick="deleteFile('${file.url}', '${file.name}')" class="flex-1 sm:flex-none bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white text-xs px-2.5 py-2 rounded-xl transition border border-red-500/20 text-center">Delete</button>
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(div);
       });
     }
 
