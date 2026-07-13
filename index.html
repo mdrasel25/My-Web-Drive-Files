@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Cloud Drive v2.4</title>
+  <title>Premium Cloud Drive v2.5</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -126,6 +126,19 @@
       }
     });
 
+    // ⚡ পেজ লোড হওয়ার সাথে সাথে চেক করবে আগে থেকে লগইন করা আছে কি না
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem("driveUserData");
+      if (savedUser) {
+        try {
+          const responsePayload = JSON.parse(savedUser);
+          initializeUserDashboard(responsePayload); // আগের তথ্য থাকলে অটো লগইন করবে
+        } catch (e) {
+          localStorage.removeItem("driveUserData");
+        }
+      }
+    });
+
     function fileSelected() {
       const file = fileInput.files[0];
       if (file) {
@@ -143,8 +156,18 @@
       }
     }
 
+    // গুগল দিয়ে ফার্স্ট টাইম লগইন সফল হলে
     function handleCredentialResponse(response) {
       const responsePayload = parseJwt(response.credential);
+      
+      // ⚡ ব্রাউজারের লোকাল মেমোরিতে ইউজারের ডাটা সেভ করে রাখা হচ্ছে
+      localStorage.setItem("driveUserData", JSON.stringify(responsePayload));
+      
+      initializeUserDashboard(responsePayload);
+    }
+
+    // ⚡ ইউজার ইন্টারফেস এবং ড্যাশবোর্ড সেটআপ করার কমন ফাংশন
+    function initializeUserDashboard(responsePayload) {
       currentUserEmail = responsePayload.email;
       
       document.getElementById("userName").innerText = responsePayload.name;
@@ -169,8 +192,11 @@
       return JSON.parse(jsonPayload);
     }
 
-    // লগআউট
-    function logout() { window.location.reload(); }
+    // ⚡ লগআউট ফাংশন (মেমোরি ডিলিট করে দেবে)
+    function logout() { 
+      localStorage.removeItem("driveUserData"); // লোকাল মেমোরি থেকে ডাটা মুছে ফেলা হলো
+      window.location.reload(); 
+    }
 
     function showStatus(text, isError = false) {
       const statusEl = document.getElementById("status");
@@ -343,7 +369,6 @@
       });
     }
 
-    // ⚡ রেসপনসিভ রেন্ডারিং ফাংশন (টেবিল টু কার্ড জাদুকরী লেআউট)
     function renderTable(files) {
       const container = document.getElementById("filesListContainer");
       container.innerHTML = "";
@@ -355,7 +380,6 @@
 
       files.forEach(file => {
         const div = document.createElement("div");
-        // মোবাইলে ফ্লেক্স কলাম (কার্ড), কম্পিউটারে গ্রিড কলাম লেআউট
         div.className = "p-4 bg-gray-900 flex flex-col gap-3 sm:grid sm:grid-cols-12 sm:items-center sm:gap-2 hover:bg-gray-900/50 transition";
         const icon = getFileIcon(file.type);
         const downloadUrl = getDownloadUrl(file.url);
